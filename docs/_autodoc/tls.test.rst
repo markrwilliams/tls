@@ -53,8 +53,3 @@ Module contents
 .. automodule:: tls.test
     :members:
     :show-inheritance:
-
-.. spelling::
-   Subpackages
-   ciphersuites
-   utils

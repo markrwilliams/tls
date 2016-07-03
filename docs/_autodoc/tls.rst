@@ -67,8 +67,3 @@ Module contents
 .. automodule:: tls
     :members:
     :show-inheritance:
-
-.. spelling::
-   Subpackages
-   ciphersuites
-   utils
