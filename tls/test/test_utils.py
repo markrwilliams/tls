@@ -13,7 +13,9 @@ from construct.core import AdaptationError, Construct, Container
 import pytest
 
 from tls.utils import (BytesAdapter, EnumClass, EnumSwitch,
-                       PrefixedBytes, TLSPrefixedArray, UBInt24, _UBInt24)
+                       SizeAtLeast, SizeAtMost, SizeWithin,
+                       PrefixedBytes, TLSPrefixedArray, UBInt24,
+                       _UBInt24)
 
 
 @pytest.mark.parametrize("byte,number", [
@@ -338,3 +340,59 @@ class TestEnumSwitch(object):
         container = Container(type=type_, value=value)
         unparsed = UBInt8EnumMappedStruct.build(container)
         assert UBInt8EnumMappedStruct.parse(unparsed) == container
+
+
+@pytest.mark.parametrize('min_size,num,acceptable', [
+    (0, 0, True),
+    (1, 0, False),
+    (1, 1, True),
+    (1, 2, True),
+])
+def test_size_at_least_validate(min_size, num, acceptable):
+    """
+    :py:meth:`SizeAtLeast._validate` enforces its minimum size
+    inclusively when encoding numbers.
+    """
+    bounded = SizeAtLeast(Construct(name="test"), min_size=min_size)
+    if acceptable:
+        assert bounded._validate(num, context=object())
+    else:
+        assert not bounded._validate(num, context=object())
+
+
+@pytest.mark.parametrize('max_size,num,acceptable', [
+    (0, 0, True),
+    (1, 0, True),
+    (1, 1, True),
+    (1, 2, False),
+])
+def test_size_at_most_validate(max_size, num, acceptable):
+    """
+    :py:meth:`SizeAtMost._validate` enforces its maximum size
+    inclusively when encoding numbers.
+    """
+    bounded = SizeAtMost(Construct(name="test"), max_size=max_size)
+    if acceptable:
+        assert bounded._validate(num, context=object())
+    else:
+        assert not bounded._validate(num, context=object())
+
+
+@pytest.mark.parametrize('min_size,max_size,num,acceptable', [
+    (0, 0, 0, True),
+    (0, 2, 0, True),
+    (1, 2, 1, True),
+    (1, 2, 2, True),
+    (1, 2, 3, False)
+])
+def test_size_within_validate(min_size, max_size, num, acceptable):
+    """
+    :py:meth:`SizeWithin._validate` enforces its maximum size
+    inclusively when encoding numbers.
+    """
+    bounded = SizeWithin(Construct(name="test"),
+                         min_size=min_size, max_size=max_size)
+    if acceptable:
+        assert bounded._validate(num, context=object())
+    else:
+        assert not bounded._validate(num, context=object())

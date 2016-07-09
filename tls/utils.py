@@ -163,3 +163,90 @@ def EnumSwitch(type_field, type_enum, value_field, value_choices):  # noqa
             construct.Switch(value_field,
                              operator.attrgetter(type_field.name),
                              value_choices))
+
+
+class SizeAtLeast(construct.Validator):
+    """
+    A :py:class:`construct.adapter.Validator` that validates a
+    sequence size is greater than or equal to some minimum.
+
+    >>> from tls.utils import SizeAtLeast, PrefixedBytes
+    >>> SizeAtLeast(PrefixedBytes(None), min_size=2).parse(b'\x01a')
+    Traceback (most recent call last):
+        ...
+    construct.core.ValidationError: ('invalid object', b'\x01a')
+
+    :param subcon: the construct to validate.
+    :type subcon: :py:class:`construct.core.Construct`
+
+    :param min_size: the (inclusive) minimum allowable size for the
+        validated sequence.
+    :type min_size: :py:class:`int`
+    """
+    def __init__(self, subconn, min_size):
+        super(SizeAtLeast, self).__init__(subconn)
+        self.min_size = min_size
+
+    def _validate(self, obj, context):
+        return self.min_size <= obj
+
+
+class SizeAtMost(construct.Validator):
+    """
+    A :py:class:`construct.adapter.Validator` that validates a
+    sequence size is less than or equal to some maximum.
+
+    >>> from tls.utils import SizeAtMost, PrefixedBytes
+    >>> SizeAtMost(PrefixedBytes(None), max_size=1).parse(b'\x02aa')
+    Traceback (most recent call last):
+        ...
+    construct.core.ValidationError: ('invalid object', b'\x02aa')
+
+    :param subcon: the construct to validate.
+    :type subcon: :py:class:`construct.core.Construct`
+
+    :param max_size: the (inclusive) maximum allowable size for the
+        validated sequence.
+    :type max_size: :py:class:`int`
+    """
+
+    def __init__(self, subconn, max_size):
+        super(SizeAtMost, self).__init__(subconn)
+        self.max_size = max_size
+
+    def _validate(self, obj, context):
+        return obj <= self.max_size
+
+
+class SizeWithin(construct.Validator):
+    """
+    A :py:class:`construct.adapter.Validator` that validates a
+    sequence's size is within some bounds.  The bounds are
+    inclusive.
+
+    >>> from tls.utils import SizeWithin, PrefixedBytes
+    >>> SizeWithin(PrefixedBytes(None),
+    ...              min_size=2, max_size=2).parse(b'\x01a')
+    Traceback (most recent call last):
+        ...
+    construct.core.ValidationError: ('invalid object', b'\x01a')
+
+    :param subcon: the construct to validate.
+    :type subcon: :py:class:`construct.core.Construct`
+
+    :param min_size: the (inclusive) minimum allowable size for the
+        validated sequence.
+    :type min_size: :py:class:`int`
+
+    :param max_size: the (inclusive) maximum allowable size for the
+        validated sequence.
+    :type max_size: :py:class:`int`
+    """
+
+    def __init__(self, subconn, min_size, max_size):
+        super(SizeWithin, self).__init__(subconn)
+        self.min_size = min_size
+        self.max_size = max_size
+
+    def _validate(self, obj, context):
+        return self.min_size <= obj <= self.max_size
