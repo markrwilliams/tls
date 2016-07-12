@@ -79,7 +79,7 @@ def TLSPrefixedArray(subconn, length_name="length", length_validator=None):  # n
     reading a leading 16 bit length.
 
     :param subconn: The construct this array contains.
-    :type subconn: `construct.Construct`
+    :type subconn: ``construct.Construct``
 
     :param length_name: (optional) The attribute name under which the
         :class:`construct.macros.UBInt16` representing this array's
@@ -93,7 +93,7 @@ def TLSPrefixedArray(subconn, length_name="length", length_validator=None):  # n
         construct of the array as its only argument and returns a
         :py:class:`construct.adapters.Validator`
 
-        ..  _TLS vector type:
+     ..  _TLS vector type:
         https://tools.ietf.org/html/rfc5246#section-4.3
     """
     length_field = construct.UBInt16(length_name)
@@ -180,11 +180,13 @@ class SizeAtLeast(construct.Validator):
     A :py:class:`construct.adapter.Validator` that validates a
     sequence size is greater than or equal to some minimum.
 
+    >>> from construct import UBInt8
     >>> from tls.utils import SizeAtLeast, PrefixedBytes
-    >>> SizeAtLeast(PrefixedBytes(None), min_size=2).parse(b'\x01a')
+    >>> PrefixedBytes(None, SizeAtLeast(UBInt8("length"),
+    ...                     min_size=2)).parse(b'\x01a')
     Traceback (most recent call last):
         ...
-    construct.core.ValidationError: ('invalid object', b'\x01a')
+    construct.core.ValidationError: ('invalid object', b'a')
 
     :param subcon: the construct to validate.
     :type subcon: :py:class:`construct.core.Construct`
@@ -207,7 +209,8 @@ class SizeAtMost(construct.Validator):
     sequence size is less than or equal to some maximum.
 
     >>> from tls.utils import SizeAtMost, PrefixedBytes
-    >>> SizeAtMost(PrefixedBytes(None), max_size=1).parse(b'\x02aa')
+    >>> PrefixedBytes(None, SizeAtMost(UBInt8("length"),
+    ...                     max_size=1)).parse(b'\x02aa')
     Traceback (most recent call last):
         ...
     construct.core.ValidationError: ('invalid object', b'\x02aa')
@@ -235,8 +238,8 @@ class SizeWithin(construct.Validator):
     inclusive.
 
     >>> from tls.utils import SizeWithin, PrefixedBytes
-    >>> SizeWithin(PrefixedBytes(None),
-    ...              min_size=2, max_size=2).parse(b'\x01a')
+    >>> PrefixedBytes(None, SizeWithin(UBInt8("length"),
+    ...                     min_size=2, max_size=2)).parse(b'\x01a')
     Traceback (most recent call last):
         ...
     construct.core.ValidationError: ('invalid object', b'\x01a')

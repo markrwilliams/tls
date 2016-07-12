@@ -13,8 +13,8 @@ from construct.core import AdaptationError, Construct, Container
 import pytest
 
 from tls.utils import (BytesAdapter, EnumClass, EnumSwitch,
-                       SizeAtLeast, SizeAtMost, SizeWithin,
-                       PrefixedBytes, TLSPrefixedArray, UBInt24,
+                       PrefixedBytes, SizeAtLeast, SizeAtMost,
+                       SizeWithin, TLSPrefixedArray, UBInt24,
                        _UBInt24)
 
 
@@ -238,14 +238,14 @@ class Equals5(Validator):
         return obj == 5
 
 
-class TLSPrefixedArrayWithLengthValidator(object):
+class TestTLSPrefixedArrayWithLengthValidator(object):
     """
     Tests for :py:class:`tls.utils.TLSPrefixedArray` with a
     ``length_validator``.
     """
 
     @pytest.fixture
-    def TLSUBInt8Array(self):
+    def TLSUBInt8Array(self):  # noqa
         """
         A :py:class:`tls.utils.TLSPrefixedArray` specialized on
         :py:func:`construct.macros.UBInt8`
@@ -263,10 +263,10 @@ class TLSPrefixedArrayWithLengthValidator(object):
                                 length_validator=Equals5)
 
     @pytest.mark.parametrize('invalid', [
-        [1, 2, 3, 4],
+        [1, 2, 3, 4],  # noqa
         [1, 2, 3, 4, 5, 6],
     ])
-    def test_build_invalid(self, TLSUBInt8Length5Array, invalid):  # noqa
+    def test_build_invalid(self, TLSUBInt8Length5Array, invalid):
         """
         :py:class:`tls.utils.TLSPrefixedArray` raises a
         :py:exc:`construct.adapters.ValidationError` when encoding a
@@ -276,10 +276,10 @@ class TLSPrefixedArrayWithLengthValidator(object):
             TLSUBInt8Length5Array.build(invalid)
 
     @pytest.mark.parametrize('invalid', [
-        b'\x00\x04' + b'\x01\x02\x03\x04',
+        b'\x00\x04' + b'\x01\x02\x03\x04',  # noqa
         b'\x00\x06' + b'\x01\x02\x03\x04\x05\x06',
     ])
-    def test_parse_invalid(self, TLSUBInt8Length5Array, invalid):  # noqa
+    def test_parse_invalid(self, TLSUBInt8Length5Array, invalid):
         """
         :py:class:`tls.utils.TLSPrefixedArray` raises a
         :py:exc:`construct.adapters.ValidationError` when decoding an
@@ -288,15 +288,15 @@ class TLSPrefixedArrayWithLengthValidator(object):
         with pytest.raises(ValidationError):
             TLSUBInt8Length5Array.parse(invalid)
 
-    def test_parse_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):
+    def test_parse_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):  # noqa
         """
         :py:class:`tls.utils.TLSPrefixedArray` decodes an array that
         passes validation.
         """
-        valid = b'\x00\x05' + '\x01\x02\x03\x04\x05'
+        valid = b'\x00\x05' + b'\x01\x02\x03\x04\x05'
         assert TLSUBInt8Array.parse(valid) == TLSUBInt8Array.parse(valid)
 
-    def test_build_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):
+    def test_build_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):   # noqa
         """
         :py:class:`tls.utils.TLSPrefixedArray` encodes an array that
         passes validation.
