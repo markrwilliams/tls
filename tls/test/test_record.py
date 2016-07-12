@@ -85,7 +85,7 @@ class TestTLSPlaintextParsing(object):
 
     def test_parse_fragment_too_long(self):
         """
-        :py:func:`tls.record.TLSPlaintext` fails to parsed a packet
+        :py:func:`tls.record.TLSPlaintext` fails to parse a packet
         containing a longer-than-allowed fragment.
         """
         packet = (
@@ -116,7 +116,7 @@ class TestTLSPlaintextParsing(object):
     def test_as_bytes_fragment_too_long(self):
         """
         :py:func:`tls.record.TLSPlaintext` fails to construct a packet
-        with a longer-than-allowed-fragment.
+        with a longer-than-allowed fragment.
         """
         plaintext = TLSPlaintext(type=ContentType.HANDSHAKE,
                                  version=ProtocolVersion(major=3, minor=3),
@@ -195,7 +195,8 @@ class TestTLSCompressedParsing(object):
 
     def test_fragment_too_long(self):
         """
-        Reject a packet containing a longer-than-allowed fragment.
+        :py:func:`tls.record.TLSCompressed` rejects a packet
+        containing a longer-than-allowed fragment.
         """
         packet = (
             b'\x16'  # type
@@ -234,7 +235,8 @@ class TestTLSCiphertextParser(object):
 
     def test_fragment_too_long(self):
         """
-        Reject a packet containing a longer-than-allowed fragment.
+        :py:func:`TLSCiphertext` rejects a packet containing a
+        longer-than-allowed fragment.
         """
         packet = (
             b'\x16'  # type

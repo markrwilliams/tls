@@ -97,7 +97,7 @@ ServerHello = Struct(
 ClientCertificateType = Struct(
     "certificate_types",
     SizeAtLeast(UBInt8("length"), min_size=1),
-    Array(lambda ctx: ctx.length, UBInt8("certificate_types"))
+    Array(lambda ctx: ctx.length, UBInt8("certificate_types")),
 )
 
 SignatureAndHashAlgorithm = Struct(
@@ -113,7 +113,7 @@ SupportedSignatureAlgorithms = Struct(
     Array(
         lambda ctx: ctx.supported_signature_algorithms_length / 2,
         SignatureAndHashAlgorithm,
-    )
+    ),
 )
 
 DistinguishedName = Struct(
@@ -161,7 +161,6 @@ Handshake = Struct(
     UBInt8("msg_type"),
     UBInt24("length"),
     Bytes("body", lambda ctx: ctx.length),
-
 )
 
 Alert = Struct(
