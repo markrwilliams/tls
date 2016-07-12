@@ -71,7 +71,7 @@ def PrefixedBytes(name, length_field=construct.UBInt8("length")):  # noqa
     )
 
 
-def TLSPrefixedArray(subconn, length_name="length"):  # noqa
+def TLSPrefixedArray(subconn, length_name="length", length_validator=None):  # noqa
     """
     The `TLS vector type`_.  It specializes on another
     :py:class:`construct.Construct` and then encodes or decodes an
@@ -81,17 +81,27 @@ def TLSPrefixedArray(subconn, length_name="length"):  # noqa
     :param subconn: The construct this array contains.
     :type subconn: `construct.Construct`
 
-    :param length_field: (optional) The attribute name under which the
+    :param length_name: (optional) The attribute name under which the
         :class:`construct.macros.UBInt16` representing this array's
         length will be accessible.  You do not need to provide this
         when encoding a python sequence!
-    :type length_field: :py:class:`str`
+    :type length_name: :py:class:`str`
 
-    ..  _TLS vector type: https://tools.ietf.org/html/rfc5246#section-4.3
+    :param length_validator: (optional) A callable that validates the
+        array's length construct.
+    :type length_validator: a callable that accepts the length
+        construct of the array as its only argument and returns a
+        :py:class:`construct.adapters.Validator`
+
+        ..  _TLS vector type:
+        https://tools.ietf.org/html/rfc5246#section-4.3
     """
-    return construct.PrefixedArray(
-        subconn,
-        length_field=construct.UBInt16(length_name))
+    length_field = construct.UBInt16(length_name)
+
+    if length_validator is not None:
+        length_field = length_validator(length_field)
+
+    return construct.PrefixedArray(subconn, length_field=length_field)
 
 
 def EnumClass(type_field, type_enum):  # noqa

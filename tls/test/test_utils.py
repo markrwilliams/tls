@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import enum
 
 from construct import Struct, UBInt16, UBInt8
-from construct.adapters import MappingError
+from construct.adapters import MappingError, ValidationError, Validator
 from construct.core import AdaptationError, Construct, Container
 
 import pytest
@@ -226,6 +226,83 @@ class TestTLSPrefixedArray(object):
         assert tls_array.build(parsed) == uint8_encoded
         unparsed = tls_array.build(ints)
         assert tls_array.parse(unparsed) == ints
+
+
+class Equals5(Validator):
+    """
+    A test fixture :py:class:`construct.adapters.Validator` subclass
+    that ensures a numeric field equals 5.
+    """
+
+    def _validate(self, obj, context):
+        return obj == 5
+
+
+class TLSPrefixedArrayWithLengthValidator(object):
+    """
+    Tests for :py:class:`tls.utils.TLSPrefixedArray` with a
+    ``length_validator``.
+    """
+
+    @pytest.fixture
+    def TLSUBInt8Array(self):
+        """
+        A :py:class:`tls.utils.TLSPrefixedArray` specialized on
+        :py:func:`construct.macros.UBInt8`
+        """
+        return TLSPrefixedArray(UBInt8("data"))
+
+    @pytest.fixture
+    def TLSUBInt8Length5Array(self):  # noqa
+        """
+        Like
+        :py:meth:`TLSPrefixedArrayWithLengthValidator.TLSUBInt8Length5Array`,
+        but only accepts arrays of length 5.
+        """
+        return TLSPrefixedArray(UBInt8("data"),
+                                length_validator=Equals5)
+
+    @pytest.mark.parametrize('invalid', [
+        [1, 2, 3, 4],
+        [1, 2, 3, 4, 5, 6],
+    ])
+    def test_build_invalid(self, TLSUBInt8Length5Array, invalid):  # noqa
+        """
+        :py:class:`tls.utils.TLSPrefixedArray` raises a
+        :py:exc:`construct.adapters.ValidationError` when encoding a
+        list with an invalid length.
+        """
+        with pytest.raises(ValidationError):
+            TLSUBInt8Length5Array.build(invalid)
+
+    @pytest.mark.parametrize('invalid', [
+        b'\x00\x04' + b'\x01\x02\x03\x04',
+        b'\x00\x06' + b'\x01\x02\x03\x04\x05\x06',
+    ])
+    def test_parse_invalid(self, TLSUBInt8Length5Array, invalid):  # noqa
+        """
+        :py:class:`tls.utils.TLSPrefixedArray` raises a
+        :py:exc:`construct.adapters.ValidationError` when decoding an
+        array with an invalid length.
+        """
+        with pytest.raises(ValidationError):
+            TLSUBInt8Length5Array.parse(invalid)
+
+    def test_parse_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):
+        """
+        :py:class:`tls.utils.TLSPrefixedArray` decodes an array that
+        passes validation.
+        """
+        valid = b'\x00\x05' + '\x01\x02\x03\x04\x05'
+        assert TLSUBInt8Array.parse(valid) == TLSUBInt8Array.parse(valid)
+
+    def test_build_valid(self, TLSUBInt8Length5Array, TLSUBInt8Array):
+        """
+        :py:class:`tls.utils.TLSPrefixedArray` encodes an array that
+        passes validation.
+        """
+        valid = [1, 2, 3, 4, 5]
+        assert TLSUBInt8Array.build(valid) == TLSUBInt8Array.build(valid)
 
 
 class IntegerEnum(enum.Enum):
