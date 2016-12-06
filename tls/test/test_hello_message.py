@@ -224,7 +224,7 @@ class TestClientHello(object):
         assert server_name_list[0].name_type == enums.NameType.HOST_NAME
         assert server_name_list[0].name == b'localhost'
 
-    def test_client_hello_with_maximum_record_length_extension(self):
+    def test_client_hello_with_maximum_fragment_length_extension(self):
         """
         :py:func:`tls.hello_message.ClientHello` parses a packet with
         a `maximum_fragment_length` extension.
@@ -237,6 +237,13 @@ class TestClientHello(object):
 
         assert extension.type == enums.ExtensionType.MAX_FRAGMENT_LENGTH
         assert extension.data == enums.MaxFragmentLength.TWO_TO_THE_9TH
+
+    def test_client_hello_maximum_fragment_length_extension_as_bytes(self):
+        record = ClientHello.from_bytes(
+            self.client_hello_packet_with_maximum_fragment_length_ext
+        )
+        assert record.as_bytes() == (
+            self.client_hello_packet_with_maximum_fragment_length_ext)
 
     def test_hello_from_bytes_with_unsupported_extension(self):
         """
