@@ -352,3 +352,27 @@ class SizeWithin(construct.Validator):
 
     def _validate(self, obj, context):
         return self.min_size <= obj <= self.max_size
+
+
+def HandshakeBody(message_construct, length_name):  # noqa
+    """
+    A wrapper for handshake messages that exposes the byte length of
+    the message on the enclosing construct's context.
+
+    :param message_construct: The handshake message construct.
+    :type message_construct: :py:class:`construct.core.Construct`
+
+    :param length_name: The name under which the message's length (in
+        bytes) will be made available on the enclosing context.  For
+        example, if this is ``"handshake_length"``, then the byte
+        length of the message will be ``context.handshake_length``.
+    :type length_name: :py:class:`str`
+    """
+    return construct.TunnelAdapter(
+        PrefixedBytes(
+            message_construct.name,
+            UBInt24(length_name),
+            nested=False,
+        ),
+        message_construct,
+    )

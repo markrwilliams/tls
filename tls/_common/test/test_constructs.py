@@ -5,18 +5,21 @@
 from __future__ import absolute_import, division, print_function
 
 import enum
+import operator
 
-from construct import Pass, Struct, UBInt16, UBInt8
+from construct import Pass, Struct, UBInt16, UBInt8, Value
 from construct.adapters import MappingError, ValidationError, Validator
 from construct.core import AdaptationError, Construct, Container
 
 import pytest
 
-from tls._common._constructs import (BytesAdapter, EnumClass, EnumSwitch,
-                                     Opaque, PrefixedBytes, SizeAtLeast,
-                                     SizeAtMost, SizeWithin,
-                                     TLSExprValidator, TLSOneOf,
-                                     TLSPrefixedArray, UBInt24, _UBInt24)
+from tls._common._constructs import (BytesAdapter, EnumClass,
+                                     EnumSwitch, HandshakeBody,
+                                     Opaque, PrefixedBytes,
+                                     SizeAtLeast, SizeAtMost,
+                                     SizeWithin, TLSExprValidator,
+                                     TLSOneOf, TLSPrefixedArray,
+                                     UBInt24, _UBInt24)
 
 from tls.exceptions import TLSValidationException
 
@@ -737,3 +740,37 @@ def test_size_within_validate(min_size, max_size, num, acceptable):
         assert bounded._validate(num, context=object())
     else:
         assert not bounded._validate(num, context=object())
+
+
+@pytest.mark.parametrize("message_construct,length_name,value,prefix,body", [
+    (UBInt8("construct1"), "length1", 1, b"\x00\x00\x01", b"\x01"),
+    (UBInt16("construct2"), "length2", 1, b"\x00\x00\x02", b"\x00\x01"),
+])
+class TestHandshakeBody(object):
+    """
+    Tests for :py:meth:`HandshakeBody`.
+    """
+
+    def test_build(self, message_construct, length_name, value, prefix, body):
+        """
+        :py:func:`HandshakeBody` encodes its value as a
+        length-prefixed sequence of bytes without requiring an
+        explicit length.
+        """
+        wrapper = HandshakeBody(message_construct, length_name)
+        assert wrapper.build(value) == prefix + body
+
+    def test_parse(self, message_construct, length_name, value, prefix, body):
+        """
+        :py:func:`HandshakeBody` decodes a length-prefixed
+        sequence of bytes and makes its length, in bytes, available on
+        the enclosing context under ``length_name``.
+        """
+        wrapper = Struct(
+            None,
+            HandshakeBody(message_construct, length_name),
+            Value("body_length", operator.attrgetter(length_name)),
+        )
+        container = wrapper.parse(prefix + body)
+        assert container[message_construct.name] == value
+        assert container.body_length == len(body)
