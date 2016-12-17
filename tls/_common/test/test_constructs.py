@@ -579,6 +579,69 @@ class TestEnumSwitch(object):
         assert UBInt8EnumMappedStruct.parse(unparsed) == container
 
 
+class TestEnumSwitchWithTail(object):
+    """
+    Tests for :py:func:`tls._common._constructs.EnumSwitch` with a
+    ``tail`` argument.
+    """
+
+    @pytest.fixture
+    def tail(self):
+        """
+        The tail to append to the
+        :py:class:`tls._common._constructs.EnumSwitch`
+        """
+        return UBInt8("tail")
+
+    @pytest.fixture
+    def enum_switch_with_tail(self, tail):
+        """
+        An :py:class:`tls._common._constructs.EnumSwitch` instance
+        with a ``tail``.
+        """
+        return Struct(
+            "enum_switch_with_tail",
+            *EnumSwitch(type_field=UBInt8("type"),
+                        type_enum=IntegerEnum,
+                        value_field="value",
+                        value_choices={
+                            IntegerEnum.FIRST: UBInt16("UBInt16"),
+                            IntegerEnum.SECOND: UBInt24("UBInt24")},
+                        tail=[tail])
+        )
+
+    def test_parse(self, enum_switch_with_tail, tail):
+        """
+        An :py:class:`tls._common._constructs.EnumSwitch` with a tail
+        parses the value of that tail.
+        """
+        enum_type = b'\x01'
+        value = b'\x00\x01'
+        tail_byte = b'\x04'
+
+        parsed = enum_switch_with_tail.parse(enum_type + value + tail_byte)
+
+        assert parsed.type == IntegerEnum.FIRST
+        assert parsed.value == 1
+        assert parsed[tail.name] == 4
+
+    def test_build(self, enum_switch_with_tail, tail):
+        """
+        An :py:class:`tls._common._constructs.EnumSwitch` with a tail
+        parses the value of that tail.
+        """
+        container = Container(type=IntegerEnum.FIRST, value=1)
+        container[tail.name] = 4
+
+        enum_type = b'\x01'
+        value = b'\x00\x01'
+        tail_byte = b'\x04'
+
+        assert enum_switch_with_tail.build(container) == (
+            enum_type + value + tail_byte
+        )
+
+
 @pytest.mark.parametrize('type_,value,encoded', [
     (IntegerEnum.SECOND, None, b'\x02'),
 ])
