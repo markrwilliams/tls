@@ -6,16 +6,18 @@ from __future__ import absolute_import, division, print_function
 
 from functools import partial
 
-from construct import (Array, Bytes, Pass, Struct,
-                       Switch, UBInt16, UBInt32,
-                       UBInt8)
+from construct import (Array, Bytes, Pass, Struct, Switch, UBInt16,
+                       UBInt32, UBInt8, Value)
+
+import operator
 
 from tls._common import enums
 
-from tls._common._constructs import (EnumClass, EnumSwitch, Opaque,
-                                     PrefixedBytes, SizeAtLeast, SizeAtMost,
-                                     SizeWithin, TLSOneOf, TLSPrefixedArray,
-                                     UBInt24)
+from tls._common._constructs import (EnumClass, EnumSwitch,
+                                     HandshakeBody, Opaque,
+                                     PrefixedBytes, SizeAtLeast,
+                                     SizeAtMost, SizeWithin, TLSOneOf,
+                                     TLSPrefixedArray, UBInt24)
 
 from tls.ciphersuites import CipherSuites
 
@@ -263,13 +265,6 @@ Certificate = Struct(
     Bytes("certificates_bytes", lambda ctx: ctx.certificates_length),
 )
 
-Handshake = Struct(
-    "Handshake",
-    UBInt8("msg_type"),
-    UBInt24("length"),
-    Bytes("body", lambda ctx: ctx.length),
-)
-
 Alert = Struct(
     "Alert",
     UBInt8("level"),
@@ -309,5 +304,28 @@ CertificateStatus = Struct(
         value_choices={
             enums.CertificateStatusType.OCSP: OCSPResponse,
         },
+    )
+)
+
+
+_HandshakeBody = partial(HandshakeBody, length_name="handshake_length")
+
+
+Handshake = Struct(
+    "handshake",
+    *EnumSwitch(
+        type_field=UBInt8("msg_type"),
+        type_enum=enums.HandshakeType,
+        value_field="body",
+        value_choices={
+            enums.HandshakeType.CLIENT_HELLO: _HandshakeBody(ClientHello),
+            enums.HandshakeType.SERVER_HELLO: _HandshakeBody(ServerHello)
+        },
+        tail=[
+            Value(
+                "length",
+                operator.attrgetter(_HandshakeBody.keywords['length_name']),
+            ),
+        ],
     )
 )
