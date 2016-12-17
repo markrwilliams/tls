@@ -211,13 +211,19 @@ class TestPrefixedBytesWithDefaultLength(object):
     :py:func:`construct.macros.UBInt8` ``length_field`` construct.
     """
 
-    @pytest.fixture
-    def prefixed_bytes(self):
+    @pytest.fixture(params=[
+        {},
+        {'nested': True},
+        {'nested': False},
+    ])
+    def prefixed_bytes(self, request):
         """
-        A trivial :py:func:`tls._common._constructs.PrefixedBytes` construct
-        with the default :py:func:`construct.macros.UBInt8` length field.
+        A trivial :py:func:`tls._common._constructs.PrefixedBytes`
+        construct with the default :py:func:`construct.macros.UBInt8`
+        length field.  Parametrized on its ``nested`` argument.
         """
-        return PrefixedBytes("PrefixedBytes")
+        kwargs = request.param
+        return PrefixedBytes("PrefixedBytes", **kwargs)
 
     def test_build(self, prefixed_bytes, bytestring, encoded):
         """
@@ -255,32 +261,50 @@ class TestPrefixedBytesWithOverriddenLength(object):
     user-supplied ``length_field`` construct.
     """
 
-    def test_build(self, bytestring, encoded, length_field):
+    @pytest.fixture(params=[
+        {},
+        {'nested': True},
+        {'nested': False},
+    ])
+    def kwargs(self, request):
+        """
+        A parametrized fixture that returns keyword argument
+        dictionaries for :py:class:`PrefixedBytes`.
+        """
+        return request.param
+
+    def test_build(self, bytestring, encoded, length_field, kwargs):
         """
         :py:meth:`tls._common._constructs.PrefixedBytes` uses the supplied
         ``length_field`` to encode :class:`bytes` as a length-prefix
         binary sequence.
         """
-        prefixed_bytes = PrefixedBytes("name", length_field=length_field)
+        prefixed_bytes = PrefixedBytes("name",
+                                       length_field=length_field,
+                                       **kwargs)
         assert prefixed_bytes.build(bytestring) == encoded
 
-    def test_parse(self, bytestring, encoded, length_field):
+    def test_parse(self, bytestring, encoded, length_field, kwargs):
         """
         :py:meth:`tls._common._constructs.PrefixedBytes` decodes a
         length-prefixed binary sequence into :py:class:`bytes` according to the
         supplied ``length_field``.
         """
-        prefixed_bytes = PrefixedBytes("name", length_field=length_field)
+        prefixed_bytes = PrefixedBytes("name",
+                                       length_field=length_field,
+                                       **kwargs)
         assert prefixed_bytes.parse(encoded) == bytestring
 
-    def test_round_trip(self, bytestring, encoded, length_field):
+    def test_round_trip(self, bytestring, encoded, length_field, kwargs):
         """
         :py:meth:`tls._common._constructs.PrefixedBytes` decodes a
         length-prefixed binary sequence encoded by
         :py:meth:`tls._common._constructs.PrefixedBytes` when the two share a
         ``length_field`` and vice versa.
         """
-        prefixed_bytes = PrefixedBytes("name", length_field)
+        prefixed_bytes = PrefixedBytes("name",
+                                       length_field,
+                                       **kwargs)
         parsed = prefixed_bytes.parse(encoded)
         assert prefixed_bytes.build(parsed) == encoded
         unparsed = prefixed_bytes.build(bytestring)

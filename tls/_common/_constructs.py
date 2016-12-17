@@ -48,7 +48,9 @@ class BytesAdapter(construct.Adapter):
         return obj
 
 
-def PrefixedBytes(name, length_field=construct.UBInt8("length")):  # noqa
+def PrefixedBytes(name,  # noqa
+                  length_field=construct.UBInt8("length"),
+                  nested=True):
     """
     Length-prefixed binary data.  This is like a
     :py:func:`construct.macros.PascalString` that raises a
@@ -62,6 +64,11 @@ def PrefixedBytes(name, length_field=construct.UBInt8("length")):  # noqa
     :param length_field: (optional) The prefixed length field.
         Defaults to :py:func:`construct.macros.UBInt8`.
     :type length_field: a :py:class:`construct.core.FormatField`
+
+    :param nested: (optional) Whether this should use its enclosing
+        Construct's context or create its own.  Defaults to
+        :py:const:`True`.
+    :type nested: :py:class:`bool`
     """
     return construct.LengthValueAdapter(
         construct.Sequence(
@@ -69,7 +76,8 @@ def PrefixedBytes(name, length_field=construct.UBInt8("length")):  # noqa
             length_field,
             BytesAdapter(
                 construct.Field("data",
-                                operator.attrgetter(length_field.name))))
+                                operator.attrgetter(length_field.name))),
+            nested=nested)
     )
 
 
