@@ -35,6 +35,26 @@ class TLSClient(object):
         The client received a ServerHelloDone message.
         """
 
+    @_machine.input()
+    def receive_tls_alert_close_notify(self):
+        """
+        The client received an Alert(close_notify) message from the server.
+        """
+
+    @_machine.input()
+    def receive_session_alert_close_notify(self):
+        """
+        The client received Session.alert(close_notify)
+        TODO: [send an Alert(close_notify) to tell the server you would like to
+        stop].
+        """
+
+    @_machine.input()
+    def receive_session_write_data(self):
+        """
+        TODO: The client received Session.write_data with the app data.
+        """
+
     @_machine.output()
     def _send_client_hello(self):
         """
@@ -50,7 +70,7 @@ class TLSClient(object):
     @_machine.output()
     def _send_client_key_exchange(self):
         """
-        Send the server a The clientKeyExchange message.
+        Send the server a The ClientKeyExchange message.
         """
 
     @_machine.output()
@@ -115,9 +135,31 @@ class TLSClient(object):
         """
         The host has initiated closing the connection.
         """
-
-    @_machine.input()
-    def receive_alert_close_notify(self):
+    @_machine.output()
+    def _send_alert_close_notify(self):
         """
-        The client received an Alert(close_notify) message from the server.
+        Send the server an Alert(close_notify) message.
+        """
+
+    @_machine.output()
+    def _close_callback_false(self):
+        """
+        TODO: Indicates something bad happened and we shut the connection down
+        instead of closing it.
+
+        I don't think this is a good output name, but unsure what to call it.
+        """
+
+    @_machine.output()
+    def _close_callback_true(self):
+        """
+        TODO: Indicates we closed the connection cleanly.
+
+        I don't think this is a good output name, but unsure what to call it.
+        """
+
+    @_machine.output()
+    def _indicate_EOF_to_the_application_somehow(self):
+        """
+        TODO: The (sad) name says it all.
         """
