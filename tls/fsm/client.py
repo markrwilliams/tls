@@ -163,3 +163,19 @@ class TLSClient(object):
         """
         TODO: The (sad) name says it all.
         """
+
+
+    # Define transitions.
+
+    wait_1.upon(receive_server_hello_done,
+                enter=wait_2,
+                outputs=[
+                    _send_certificate,
+                    _send_client_key_exchange,
+                    _send_certificate_verify,
+                    _send_change_cipher_spec,
+                    _send_finished,
+    ])
+
+
+
