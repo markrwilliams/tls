@@ -17,165 +17,212 @@ class TLSClient(object):
     """
     _machine = MethodicalMachine()
 
-    @_machine.input()
-    def receive_finished(self):
+    @_machine.state(initial=True)
+    def no_connection(self):
         """
-        The client received a Finished message from the server.
-        """
-
-    @_machine.input()
-    def receive_hello_request(self):
-        """
-        The client received a HelloRequest from the server.
+        The intial state, before a connection is established.
         """
 
     @_machine.input()
-    def receive_server_hello_done(self):
+    def connection_established(self):
         """
-        The client received a ServerHelloDone message.
+        A TCP connection has been established.
+        """
+
+    @_machine.state()
+    def want_to_send_client_hello(self):
+        """
+        A ClientHello has been sent over the TCP connection.
+        """
+
+    @_machine.output()
+    def _emit_client_hello(self):
+        return "ClientHello"
+
+    @_machine.input()
+    def send_client_hello(self):
+        """
+        Send a ClientHello over the TCP connection.
+        """
+
+    @_machine.state()
+    def waiting_for_server_hello(self):
+        """
+        Waiting for a ServerHello in respons to a ClientHello.
+        """
+
+    @_machine.state()
+    def dead(self):
+        """
+        An error occurred, dead state, etc.
         """
 
     @_machine.input()
-    def receive_tls_alert_close_notify(self):
+    def server_hello_wait_expired(self):
         """
-        The client received an Alert(close_notify) message from the server.
+        We can't wait for a ServerHello any longer.
+        """
+
+    @_machine.output()
+    def _cleanup_after_expired_client_hello(self):
+        """
+        Clean up after expired ClientHello
+        """
+        return "cleaned up client hello"
+
+    @_machine.input()
+    def received_server_hello(self):
+        """
+        We got a ServerHello
+        """
+
+    @_machine.state()
+    def waiting_for_server_hello_done(self):
+        """
+        We got a ServerHello and now we're waiting for a ServerHelloDone.
+        """
+
+    @_machine.output()
+    def _process_server_hello(self):
+        """
+        Actually act on ServerHello
+        """
+        return "processed ServerHello"
+
+    @_machine.state()
+    def received_server_hello_done(self):
+        """
+        Received a ServerHelloDone.
         """
 
     @_machine.input()
-    def receive_session_alert_close_notify(self):
+    def server_hello_done_wait_expired(self):
         """
-        The client received Session.alert(close_notify)
-        TODO: [send an Alert(close_notify) to tell the server you would like to
-        stop].
+        We can't wait for a ServerHelloDone any longer.
+        """
+
+    @_machine.output()
+    def _cleanup_after_expired_server_hello_done(self):
+        """
+        Clean up after we've timed out waiting for ServerHelloDone.
+        """
+        return "cleaned up after ServerHelloDone"
+
+    @_machine.input()
+    def received_server_hello_done(self):
+        """
+        We got a ServerHelloDone
+        """
+        return "processed ServerHelloDone"
+
+    @_machine.state()
+    def want_to_send_client_key_exchange(self):
+        """
+        We want to send a ClientKeyExchange
         """
 
     @_machine.input()
-    def receive_session_write_data(self):
+    def send_client_key_exchange(self):
         """
-        TODO: The client received Session.write_data with the app data.
-        """
-
-    @_machine.output()
-    def _send_client_hello(self):
-        """
-        Send the server a The clientHello message.
+        Send a client key exchange.
         """
 
     @_machine.output()
-    def _send_certificate(self):
+    def _emit_client_key_exhange(self):
         """
-        Send the server a Certificate message.
+        Emit a ClientKeyExchange message
         """
-
-    @_machine.output()
-    def _send_client_key_exchange(self):
-        """
-        Send the server a The ClientKeyExchange message.
-        """
-
-    @_machine.output()
-    def _send_certificate_verify(self):
-        """
-        Send the server a CertificateVerify message.
-        """
-
-    @_machine.output()
-    def _send_change_cipher_spec(self):
-        """
-        To help avoid pipeline stalls, ChangeCipherSpec is an independent TLS
-        protocol content type, and is not actually a TLS handshake message.
-
-        Send it to the server.
-        """
-
-    @_machine.output()
-    def _send_finished(self):
-        """
-        Send the server a Finished message.
-        """
-
-    @_machine.output()
-    def _send_alert_no_renegotiation(self):
-        """
-        Send the server an Alert(no_renegotiation) message.
-        """
+        return "ClientKeyExchange"
 
     @_machine.state()
-    def idle(self):
+    def want_to_send_change_cipher_spec(self):
         """
-        The client is idle.
-        """
-
-    @_machine.state()
-    def wait_1(self):
-        """
-        The client is waiting.
+        We want to send a ChangeCipherSpec.
         """
 
-    @_machine.state()
-    def wait_2(self):
+    @_machine.input()
+    def send_change_cipher_spec(self):
         """
-        The client is waiting (for a Finished).
-        """
-
-    @_machine.state()
-    def app_data(self):
-        """
-        The client is ready to exchange application data.
-        """
-
-    @_machine.state()
-    def shutdown(self):
-        """
-        The connection to the server has been shut down.
-        """
-
-    @_machine.state()
-    def host_initiated_closing(self):
-        """
-        The host has initiated closing the connection.
-        """
-    @_machine.output()
-    def _send_alert_close_notify(self):
-        """
-        Send the server an Alert(close_notify) message.
+        Send the ChangeCipherSpec message.
         """
 
     @_machine.output()
-    def _close_callback_false(self):
+    def _emit_change_cipher_spec(self):
         """
-        TODO: Indicates something bad happened and we shut the connection down
-        instead of closing it.
+        Emit the ChangeCipherSpec message.
+        """
+        return "ChangeCipherSpec"
 
-        I don't think this is a good output name, but unsure what to call it.
+    @_machine.output()
+    def _set_cipher_spec(self):
+        """
+        Set the desired cipher specification.
+        """
+        return "cipher spec set"
+
+    @_machine.state()
+    def want_to_finish(self):
+        """
+        We want to send the Finished message.
+        """
+
+    @_machine.input()
+    def send_finished(self):
+        """
+        Send a Finished message.
         """
 
     @_machine.output()
-    def _close_callback_true(self):
+    def _emit_finished(self):
         """
-        TODO: Indicates we closed the connection cleanly.
+        Emit a finished message.
+        """
+        return "Finished"
 
-        I don't think this is a good output name, but unsure what to call it.
+    @_machine.state()
+    def finished(self):
+        """
+        The handshake is finished.
         """
 
-    @_machine.output()
-    def _indicate_EOF_to_the_application_somehow(self):
-        """
-        TODO: The (sad) name says it all.
-        """
+    no_connection.upon(connection_established,
+                       enter=want_to_send_client_hello,
+                       outputs=[])
+    want_to_send_client_hello.upon(send_client_hello,
+                                   enter=waiting_for_server_hello,
+                                   outputs=[_emit_client_hello])
 
+    waiting_for_server_hello.upon(received_server_hello,
+                                  enter=waiting_for_server_hello_done,
+                                  outputs=[_process_server_hello])
 
-    # Define transitions.
+    waiting_for_server_hello.upon(server_hello_wait_expired,
+                                  enter=dead,
+                                  outputs=[_cleanup_after_expired_client_hello])
 
-    wait_1.upon(receive_server_hello_done,
-                enter=wait_2,
-                outputs=[
-                    _send_certificate,
-                    _send_client_key_exchange,
-                    _send_certificate_verify,
-                    _send_change_cipher_spec,
-                    _send_finished,
-    ])
+    waiting_for_server_hello_done.upon(received_server_hello_done,
+                                       enter=want_to_send_client_key_exchange,
+                                       outputs=[])
 
+    waiting_for_server_hello_done.upon(
+        server_hello_done_wait_expired,
+        enter=dead,
+        outputs=[_cleanup_after_expired_server_hello_done])
 
+    want_to_send_client_key_exchange.upon(
+        send_client_key_exchange,
+        enter=want_to_send_change_cipher_spec,
+        outputs=[_emit_client_key_exhange],
+    )
 
+    want_to_send_change_cipher_spec.upon(
+        send_change_cipher_spec,
+        enter=want_to_finish,
+        outputs=[_emit_change_cipher_spec, _set_cipher_spec],
+    )
+
+    want_to_finish.upon(
+        send_finished,
+        enter=finished,
+        outputs=[_emit_finished],
+    )
