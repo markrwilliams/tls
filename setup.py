@@ -15,6 +15,7 @@ setuptools.setup(
     long_description="tls",
     install_requires=[
         "attrs",
+        "Automat",
         "construct==2.5.3",
         "cryptography",
         "enum34",
