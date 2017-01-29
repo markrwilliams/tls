@@ -133,8 +133,8 @@ class TLSClient(object):
         """
         return "cleaned up after ServerHelloDone"
 
-    @_machine.input()
-    def received_server_hello_done(self):
+    @_machine.ouput()
+    def _process_server_hello_done(self):
         """
         We got a ServerHelloDone
         """
