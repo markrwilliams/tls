@@ -221,9 +221,11 @@ class TLSClient(object):
                                   enter=waiting_for_server_key_exchange,
                                   outputs=[_process_server_hello])
 
-    waiting_for_server_hello.upon(server_hello_wait_expired,
-                                  enter=dead,
-                                  outputs=[_cleanup_after_expired_client_hello])
+    waiting_for_server_hello.upon(
+        server_hello_wait_expired,
+        enter=dead,
+        outputs=[_cleanup_after_expired_client_hello],
+    )
 
     waiting_for_server_key_exchange.upon(
         received_server_key_exchange,
