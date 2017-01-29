@@ -114,7 +114,7 @@ class TLSClient(object):
         """
         return "processed ServerHello"
 
-    @_machine.state()
+    @_machine.input()
     def received_server_hello_done(self):
         """
         Received a ServerHelloDone.
@@ -133,7 +133,7 @@ class TLSClient(object):
         """
         return "cleaned up after ServerHelloDone"
 
-    @_machine.ouput()
+    @_machine.output()
     def _process_server_hello_done(self):
         """
         We got a ServerHelloDone
